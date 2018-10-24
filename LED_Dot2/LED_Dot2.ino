@@ -172,23 +172,40 @@ ISR(TIMER1_OVF_vect)        // interrupt service routine
   if(hours == 25){
     hours = 0;
   }
+
+  if(cd == true)
+  {
+    secondsC --;
+    if(secondsC == 0)
+    {
+      minutesC --;
+      secondsC = 59;
+    }
+    if(minutesC == 0)
+    {
+      cd = false;
+      cAlarm = true;
+    }
+  }
   
 }
 int k = 4;
 int menuEntry = 0;
-int lbs9 = HIGH, lbs5 = HIGH,lbs6 = HIGH,bs5,bs6,bs9;
+//int lbs9 = HIGH, lbs5 = HIGH,lbs6 = HIGH,bs5,bs6,bs9;
 int secondsA = 0 , minutesA = 49, hoursA = 21;
+int secondsC = 0 , minutesC = 0;
 unsigned long int ldt5 = 0,ldt6 = 0, ldt9 = 0;
 unsigned long int prev = 0;
 void setTime();
 void setAlarm();
-bool pressed = false, alarm = false;
-bool printBasic = true, printAlarm = true, printSet = true;
+void countDown();
+bool pressed = false, alarm = false, cd = false, cAlarm = false;
+bool printBasic = true, printAlarm = true, printSet = true, printCD;
 
 void loop() {
   
   if(menuEntry == 0  && printBasic == true){
-    printBasic = true; printAlarm = true; printSet = true;
+    printBasic = true; printAlarm = true; printSet = true; printCD = true;
     char setT[9] = "Basic";
   while(printBasic == true){
     clear_display();
@@ -231,7 +248,7 @@ void loop() {
     menuEntry ++;
     pressed =false;
   }
-  if(menuEntry > 2){
+  if(menuEntry > 3){
     menuEntry  = 0;
   }
   switch(menuEntry){
@@ -241,6 +258,9 @@ void loop() {
     case 2:
       Serial.println("ENTER");
       setAlarm();
+      break;
+    case 3:
+      countDown();
       break;
   }
   if(alarm == true){
@@ -258,13 +278,14 @@ void loop() {
       alarm = false;
     }
   }
+  
 }
 
 void setTime(){
   
   unsigned long int current = millis();
   if(menuEntry == 1 && printSet == true){
-    printBasic = true; printAlarm = true; printSet = true;
+    printBasic = true; printAlarm = true; printSet = true; printCD = true;
   char setT[9] = "set time";
   while(printSet == true){
     clear_display();
@@ -290,9 +311,9 @@ void setTime(){
           k = 4;
         }
       }
-      if(digitalRead(5) != lbs5){
-        ldt5 = millis();
-      }
+//      if(digitalRead(5) != lbs5){
+//        ldt5 = millis();
+//      }
       if(digitalRead(5) == LOW){
             if(k == 4){
               minutes ++;
@@ -307,7 +328,7 @@ void setTime(){
               }
             }
           }
-      lbs5 = digitalRead(5);
+      //lbs5 = digitalRead(5);
       if(digitalRead(6) == LOW){
 
         if(k == 4){
@@ -344,9 +365,9 @@ void setTime(){
   while(digitalRead(5) == LOW && digitalRead(6) == LOW){
     seconds = secondsA;
   }
-  if(digitalRead(9) != lbs9){
-    ldt9 = millis();  
-  }
+//  if(digitalRead(9) != lbs9){
+//    ldt9 = millis();  
+//  }
 
   while(digitalRead(9) == LOW){
     pressed = true;
@@ -360,7 +381,7 @@ void setTime(){
 
 void setAlarm(){
   if(menuEntry == 2 && printAlarm ==true){
-    printBasic = true; printAlarm = true; printSet = true;
+    printBasic = true; printAlarm = true; printSet = true; printCD = true;
   char setT[9] = "Alarm";
   while(printAlarm == true){
     clear_display();
@@ -388,9 +409,9 @@ void setAlarm(){
           k = 4;
         }
       }
-      if(digitalRead(5) != lbs5){
-        ldt5 = millis();
-      }
+//      if(digitalRead(5) != lbs5){
+//        ldt5 = millis();
+//      }
       if(digitalRead(5) == LOW){
             if(k == 4){
               minutesA ++;
@@ -405,7 +426,7 @@ void setAlarm(){
               }
             }
           }
-      lbs5 = digitalRead(5);
+      //lbs5 = digitalRead(5);
       if(digitalRead(6) == LOW){
 
         if(k == 4){
@@ -443,9 +464,115 @@ void setAlarm(){
     alarm = true;
     Serial.println("Alarm Set");
   }
-  if(digitalRead(9) != lbs9){
-    ldt9 = millis();  
+//  if(digitalRead(9) != lbs9){
+//    ldt9 = millis();  
+//  }
+
+  while(digitalRead(9) == LOW){
+    pressed = true;
   }
+  if(pressed == true){
+    menuEntry ++;
+    pressed =false;
+  }
+}
+
+void countDown(){
+  if(menuEntry == 3 && printCD ==true){
+    printBasic = true; printAlarm = true; printSet = true; printCD = true;
+  char setT[9] = "CountDown";
+  while(printAlarm == true){
+    clear_display();
+    for(int i = 0; i < 9; i++){
+      print_normal_char(1+(i * 6),1,setT[i]);
+    }
+    delay(750);
+    clear_display();
+
+    printCD = false;  
+  }
+  }
+  unsigned long int current = millis();
+  //Serial.println(minutesA);
+  uint8_t i = 0;
+      if(digitalRead(7) == LOW){
+        k-= 3;
+        if(k <= 1){
+          k = 1;
+        }
+      }
+      if(digitalRead(8) == LOW){
+        k+=3;
+        if(k >= 4){
+          k = 4;
+        }
+      }
+//      if(digitalRead(5) != lbs5){
+//        ldt5 = millis();
+//      }
+      if(digitalRead(5) == LOW){
+            if(k == 4){
+              minutesC ++;
+              if(secondsC >= 60){
+                secondsC = 0;
+              }
+            }
+            if(k == 1){
+              minutesC ++;
+              if(minutesC > 24){
+                minutesC = 0;
+              }
+            }
+          }
+      //lbs5 = digitalRead(5);
+      if(digitalRead(6) == LOW){
+
+        if(k == 4){
+          secondsA --;
+          if(secondsC < 0){
+            secondsC = 59;
+          }
+        }
+
+        if(k == 1){
+          minutesA --;
+          if(minutesC < 0){
+            minutesC = 59;
+          }
+        }
+      }
+      if((current - prev) >= 75){
+        prev = current;
+        if(times[k] != ' '){
+          times[k] = ' ';
+          times[k-1] = ' ';
+        }
+        else{
+          times[0] = {'0' + (minutesC / 10)};
+          times[1] = {'0' + (minutesC % 10)};
+          times[2] = ':';
+          times[3] = {'0' + (secondsC / 10)}; 
+          times[4] = {'0' + (secondsC % 10)};
+        }
+      }
+   for(i = 0; i < 5; i++){
+     print_tiny_char(3 + (i * 6), 2, times[i]);
+  }
+  while(digitalRead(5) == LOW){
+    cd = true;
+    Serial.println("Alarm Set");
+  }
+
+  if(cAlarm == true)
+  {
+    tone(3,440,1000);
+    delay(500);
+    tone(3,261,1000);
+    cAlarm = false;
+  }
+//  if(digitalRead(9) != lbs9){
+//    ldt9 = millis();  
+//  }
 
   while(digitalRead(9) == LOW){
     pressed = true;
